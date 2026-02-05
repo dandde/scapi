@@ -3,10 +3,10 @@
 use std::time::Duration;
 
 use crate::common::error::CommonError;
+use crate::domain::extract::config::ExtractConfig;
 use crate::domain::fetch::config::FetchConfig;
 use crate::domain::parse::config::ParseConfig;
 use crate::domain::select::config::{SelectConfig, SelectorType};
-use crate::domain::extract::config::ExtractConfig;
 
 /// Server configuration.
 #[derive(Debug, Clone)]
@@ -46,17 +46,20 @@ impl AppConfig {
                 .unwrap_or_else(|_| "3000".to_string())
                 .parse()
                 .map_err(|e| CommonError::config(format!("Invalid SCAPI_PORT: {}", e)))?,
-            bind_addr: std::env::var("SCAPI_BIND_ADDR")
-                .unwrap_or_else(|_| "0.0.0.0".to_string()),
+            bind_addr: std::env::var("SCAPI_BIND_ADDR").unwrap_or_else(|_| "0.0.0.0".to_string()),
             max_connections: std::env::var("SCAPI_MAX_CONCURRENT_REQUESTS")
                 .unwrap_or_else(|_| "1000".to_string())
                 .parse()
-                .map_err(|e| CommonError::config(format!("Invalid SCAPI_MAX_CONCURRENT_REQUESTS: {}", e)))?,
+                .map_err(|e| {
+                    CommonError::config(format!("Invalid SCAPI_MAX_CONCURRENT_REQUESTS: {}", e))
+                })?,
             request_timeout: Duration::from_secs(
                 std::env::var("SCAPI_REQUEST_TIMEOUT_SECS")
                     .unwrap_or_else(|_| "30".to_string())
                     .parse()
-                    .map_err(|e| CommonError::config(format!("Invalid SCAPI_REQUEST_TIMEOUT_SECS: {}", e)))?,
+                    .map_err(|e| {
+                        CommonError::config(format!("Invalid SCAPI_REQUEST_TIMEOUT_SECS: {}", e))
+                    })?,
             ),
         };
 
@@ -65,7 +68,9 @@ impl AppConfig {
                 std::env::var("SCAPI_FETCH_TIMEOUT_SECS")
                     .unwrap_or_else(|_| "30".to_string())
                     .parse()
-                    .map_err(|e| CommonError::config(format!("Invalid SCAPI_FETCH_TIMEOUT_SECS: {}", e)))?,
+                    .map_err(|e| {
+                        CommonError::config(format!("Invalid SCAPI_FETCH_TIMEOUT_SECS: {}", e))
+                    })?,
             ),
             user_agent: std::env::var("SCAPI_FETCH_USER_AGENT")
                 .unwrap_or_else(|_| "SCAPI/1.0".to_string()),
@@ -93,6 +98,18 @@ impl AppConfig {
                     .parse()
                     .unwrap_or(30),
             ),
+            max_content_size: std::env::var("SCAPI_FETCH_MAX_CONTENT_SIZE")
+                .unwrap_or_else(|_| "104857600".to_string())
+                .parse()
+                .unwrap_or(104857600),
+            streaming_threshold: std::env::var("SCAPI_FETCH_STREAMING_THRESHOLD")
+                .unwrap_or_else(|_| "5242880".to_string())
+                .parse()
+                .unwrap_or(5242880),
+            stream_buffer_size: std::env::var("SCAPI_FETCH_STREAM_BUFFER_SIZE")
+                .unwrap_or_else(|_| "65536".to_string())
+                .parse()
+                .unwrap_or(65536),
         };
 
         let parse = ParseConfig {

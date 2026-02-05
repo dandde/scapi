@@ -20,6 +20,27 @@ pub struct FetchConfig {
     pub connect_timeout: Duration,
     /// Read timeout duration
     pub read_timeout: Duration,
+    /// Maximum content size in bytes
+    #[serde(default = "default_max_content_size")]
+    pub max_content_size: usize,
+    /// Use streaming for files larger than this
+    #[serde(default = "default_streaming_threshold")]
+    pub streaming_threshold: usize,
+    /// Buffer size for streaming operations
+    #[serde(default = "default_stream_buffer_size")]
+    pub stream_buffer_size: usize,
+}
+
+fn default_max_content_size() -> usize {
+    100 * 1024 * 1024 // 100MB
+}
+
+fn default_streaming_threshold() -> usize {
+    5 * 1024 * 1024 // 5MB
+}
+
+fn default_stream_buffer_size() -> usize {
+    64 * 1024 // 64KB
 }
 
 impl Default for FetchConfig {
@@ -32,6 +53,9 @@ impl Default for FetchConfig {
             verify_tls: true,
             connect_timeout: Duration::from_secs(10),
             read_timeout: Duration::from_secs(30),
+            max_content_size: default_max_content_size(),
+            streaming_threshold: default_streaming_threshold(),
+            stream_buffer_size: default_stream_buffer_size(),
         }
     }
 }

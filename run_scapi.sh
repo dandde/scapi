@@ -44,7 +44,7 @@ RESPONSE=$(curl -s -w "\n%{http_code}" -X POST http://127.0.0.1:3000/api/v1/fetc
      -d '{"url": "https://palimyanmarpitaka.blogspot.com/"}')
 
 HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
-BODY=$(echo "$RESPONSE" | head -n-1)
+BODY=$(echo "$RESPONSE" | sed '$d')
 
 echo "Response Code: $HTTP_CODE"
 # Echo first 50 chars of body to show connectivity without spamming

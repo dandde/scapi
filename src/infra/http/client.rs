@@ -6,11 +6,14 @@ use std::time::Duration;
 use crate::domain::fetch::config::FetchConfig;
 use crate::domain::fetch::error::FetchError;
 
+use crate::infra::http::streaming::StreamingClient;
+
 /// HTTP client wrapper.
 #[derive(Debug, Clone)]
 pub struct HttpClient {
     /// Inner reqwest client
     client: Client,
+    streaming_client: StreamingClient,
 }
 
 impl HttpClient {
@@ -21,7 +24,12 @@ impl HttpClient {
             .build()
             .map_err(|e| FetchError::NetworkError(e.to_string()))?;
 
-        Ok(Self { client })
+        let streaming_client = StreamingClient::new(100 * 1024 * 1024)?; // 100MB default
+
+        Ok(Self {
+            client,
+            streaming_client,
+        })
     }
 
     /// Create a new HTTP client with custom configuration.
@@ -45,43 +53,21 @@ impl HttpClient {
             .build()
             .map_err(|e| FetchError::NetworkError(e.to_string()))?;
 
-        Ok(Self { client })
+        let streaming_client = StreamingClient::new(config.max_content_size)?;
+
+        Ok(Self {
+            client,
+            streaming_client,
+        })
     }
 
     /// Fetch content from a URL.
     pub async fn fetch(&self, url: &str, config: &FetchConfig) -> Result<String, FetchError> {
-        let response = self
-            .client
-            .get(url)
-            .timeout(config.timeout)
-            .send()
-            .await
-            .map_err(|e| {
-                if e.is_timeout() {
-                    FetchError::Timeout(e.to_string())
-                } else {
-                    FetchError::NetworkError(e.to_string())
-                }
-            })?;
-
-        let status = response.status();
-        let final_url = response.url().to_string();
-
-        if !status.is_success() {
-            return Err(FetchError::ServerError(format!(
-                "HTTP {} for {}",
-                status, final_url
-            )));
-        }
-
-        let content = response
-            .text()
-            .await
-            .map_err(|e| FetchError::NetworkError(e.to_string()))?;
-
-        // Check content size limit
-        let _content_size = content.len();
-        // TODO: Check against config.max_size
+        // Use streaming client for all fetches to enforce size limits
+        let (content, _metadata) = self
+            .streaming_client
+            .fetch_to_string(url, config, config.max_content_size)
+            .await?;
 
         Ok(content)
     }
@@ -103,6 +89,11 @@ impl HttpClient {
             .send()
             .await
             .map_err(|e| FetchError::NetworkError(e.to_string()))
+    }
+
+    /// Get streaming client for manual control
+    pub fn streaming(&self) -> &StreamingClient {
+        &self.streaming_client
     }
 }
 
