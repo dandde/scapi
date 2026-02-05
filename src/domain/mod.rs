@@ -4,5 +4,5 @@
 
 pub mod fetch;
 pub mod parse;
-pub mod select;
+
 pub mod extract;

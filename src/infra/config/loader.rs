@@ -6,7 +6,6 @@ use crate::common::error::CommonError;
 use crate::domain::extract::config::ExtractConfig;
 use crate::domain::fetch::config::FetchConfig;
 use crate::domain::parse::config::ParseConfig;
-use crate::domain::select::config::{SelectConfig, SelectorType};
 
 /// Server configuration.
 #[derive(Debug, Clone)]
@@ -30,8 +29,7 @@ pub struct AppConfig {
     pub fetch: FetchConfig,
     /// Parse configuration
     pub parse: ParseConfig,
-    /// Select configuration
-    pub select: SelectConfig,
+
     /// Extract configuration
     pub extract: ExtractConfig,
 }
@@ -135,37 +133,6 @@ impl AppConfig {
                 .unwrap_or(false),
         };
 
-        let select = SelectConfig {
-            text_only: std::env::var("SCAPI_SELECT_TEXT_ONLY")
-                .unwrap_or_else(|_| "false".to_string())
-                .parse()
-                .unwrap_or(false),
-            first_only: std::env::var("SCAPI_SELECT_FIRST_ONLY")
-                .unwrap_or_else(|_| "false".to_string())
-                .parse()
-                .unwrap_or(false),
-            max_results: std::env::var("SCAPI_SELECT_MAX_RESULTS")
-                .unwrap_or_else(|_| "10000".to_string())
-                .parse()
-                .unwrap_or(10000),
-            selector_type: match std::env::var("SCAPI_SELECTOR_TYPE")
-                .unwrap_or_else(|_| "css".to_string())
-                .to_lowercase()
-                .as_str()
-            {
-                "xpath" => SelectorType::XPath,
-                _ => SelectorType::Css,
-            },
-            include_attributes: std::env::var("SCAPI_SELECT_INCLUDE_ATTRIBUTES")
-                .unwrap_or_else(|_| "true".to_string())
-                .parse()
-                .unwrap_or(true),
-            include_html: std::env::var("SCAPI_SELECT_INCLUDE_HTML")
-                .unwrap_or_else(|_| "false".to_string())
-                .parse()
-                .unwrap_or(false),
-        };
-
         let extract = ExtractConfig {
             trim_whitespace: std::env::var("SCAPI_EXTRACT_TRIM_WHITESPACE")
                 .unwrap_or_else(|_| "true".to_string())
@@ -194,7 +161,7 @@ impl AppConfig {
             server,
             fetch,
             parse,
-            select,
+
             extract,
         })
     }

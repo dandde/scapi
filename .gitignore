@@ -41,3 +41,4 @@ coverage/
 benches/output/
 tests/output/
 scapi_design/
+assets/

@@ -1,3 +1,4 @@
+use futures::stream::StreamExt;
 use scapi::domain::fetch::config::FetchConfig;
 use scapi::infra::http::HttpClient;
 use std::time::Instant;
@@ -6,7 +7,7 @@ use std::time::Instant;
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let url = "https://palimyanmarpitaka.blogspot.com/2021/04/blog-post.html";
     let config = FetchConfig::default();
-    let client = HttpClient::new()?;
+    let _client = HttpClient::new()?;
 
     println!("Benchmarking fetch for URL: {}", url);
     println!("--------------------------------------------------");
@@ -19,9 +20,27 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let content_new = client1.fetch(url, &config).await?;
     let duration_new = start.elapsed();
     println!(
-        "New (Streaming):     {:?} (Size: {} bytes)",
+        "Buffered (String):   {:?} (Size: {} bytes)",
         duration_new,
         content_new.len()
+    );
+
+    // 2. True Streaming (Chunk by Chunk)
+    let client2 = HttpClient::new()?;
+    let start = Instant::now();
+    let mut stream_result = client2.streaming().fetch_stream(url, &config).await?;
+    let ttfb = start.elapsed();
+
+    let mut total_bytes = 0;
+    while let Some(chunk) = stream_result.stream.next().await {
+        let chunk = chunk?;
+        total_bytes += chunk.len();
+    }
+    let duration_streaming = start.elapsed();
+
+    println!(
+        "True Streaming:      {:?} (TTFB: {:?}, Size: {} bytes)",
+        duration_streaming, ttfb, total_bytes
     );
 
     // 2. Previous Implementation (Simulated via client.get().text())
@@ -31,7 +50,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let content_old = response.text().await?;
     let duration_old = start.elapsed();
     println!(
-        "Previous (Buffered): {:?} (Size: {} bytes)",
+        "Reqwest (Get+Text):  {:?} (Size: {} bytes)",
         duration_old,
         content_old.len()
     );

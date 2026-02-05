@@ -13,6 +13,14 @@ pub enum ExtractError {
     #[error("Validation error: {0}")]
     ValidationError(String),
 
+    /// Parsing error
+    #[error("Parsing error: {0}")]
+    ParsingError(String),
+
+    /// Selection error
+    #[error("Selection error: {0}")]
+    SelectionError(String),
+
     /// Type conversion error
     #[error("Type conversion error: {0}")]
     ConversionError(String),

@@ -21,6 +21,8 @@ pub fn create_router(state: AppState) -> Router {
         //.route("/health", get(handler::health::health_handler)) // TODO: Implement health
         .route("/api/v1/fetch", post(handler::fetch::fetch_handler))
         .route("/api/v1/parse", post(handler::parse::parse_handler))
+        .route("/api/v1/extract", post(handler::extract::extract_handler))
+        .layer(axum::extract::DefaultBodyLimit::max(50 * 1024 * 1024)) // 50MB limit
         .with_state(Arc::new(state))
     // Middleware layers will be added when middleware is implemented
     // .layer(middleware::request_id())

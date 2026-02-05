@@ -44,10 +44,6 @@ pub enum ApiError {
     #[error("Invalid URL: {0}")]
     InvalidUrl(String),
 
-    /// Invalid selector (400)
-    #[error("Invalid selector: {0}")]
-    InvalidSelector(String),
-
     /// Missing required field (400)
     #[error("Missing required field: {0}")]
     MissingField(String),
@@ -84,7 +80,7 @@ impl ApiError {
             ApiError::ValidationError(_) => StatusCode::BAD_REQUEST,
             ApiError::BadRequest(_) => StatusCode::BAD_REQUEST,
             ApiError::InvalidUrl(_) => StatusCode::BAD_REQUEST,
-            ApiError::InvalidSelector(_) => StatusCode::BAD_REQUEST,
+
             ApiError::MissingField(_) => StatusCode::BAD_REQUEST,
             ApiError::Unauthorized(_) => StatusCode::UNAUTHORIZED,
             ApiError::RateLimited(_) => StatusCode::TOO_MANY_REQUESTS,
@@ -101,7 +97,7 @@ impl ApiError {
             ApiError::ValidationError(_) => "VALIDATION_ERROR",
             ApiError::BadRequest(_) => "BAD_REQUEST",
             ApiError::InvalidUrl(_) => "INVALID_URL",
-            ApiError::InvalidSelector(_) => "INVALID_SELECTOR",
+
             ApiError::MissingField(_) => "MISSING_FIELD",
             ApiError::Unauthorized(_) => "UNAUTHORIZED",
             ApiError::RateLimited(_) => "RATE_LIMITED",

@@ -2,112 +2,84 @@
 
 use serde::{Deserialize, Serialize};
 
-/// Extraction rule type.
+/// Extraction rule definition.
+///
+/// A rule defines how to extract data from a node.
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum ExtractionRule {
-    /// Simple field extraction
-    Simple(SimpleRule),
-    /// Complex extraction with transformation
-    Complex(ComplexRule),
-    /// Computed field
-    Computed(ComputedRule),
-}
-
-/// Simple extraction rule.
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct SimpleRule {
-    /// Field name
+pub struct ExtractionRule {
+    /// Field name in the output JSON.
     pub field: String,
-    /// Selector (CSS or XPath)
-    pub selector: String,
-    /// Selector type
+
+    /// Selector to find the element(s).
+    /// If None, usage depends on context (e.g. current node).
+    pub selector: Option<String>,
+
+    /// Selector type (CSS vs XPath). Default: CSS.
+    #[serde(default)]
     pub selector_type: SelectorType,
-    /// Data type
-    pub data_type: DataType,
-    /// Whether the field is required
-    pub required: bool,
-    /// Default value if not found
-    pub default: Option<String>,
-}
 
-/// Complex extraction rule.
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ComplexRule {
-    /// Field name
-    pub field: String,
-    /// Multiple selectors (tried in order)
-    pub selectors: Vec<String>,
-    /// Data type
-    pub data_type: DataType,
-    /// Transformation function name
-    pub transform: Option<String>,
-    /// Validation rules
-    pub validation: Vec<ValidationRule>,
-}
+    /// Attribute to extract. If None, extracts text.
+    pub attribute: Option<String>,
 
-/// Computed field rule.
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ComputedRule {
-    /// Field name
-    pub field: String,
-    /// Expression or function
-    pub expression: String,
-    /// Dependencies on other fields
-    pub dependencies: Vec<String>,
-    /// Data type
+    /// Data type to cast to / treat as.
+    #[serde(default)]
     pub data_type: DataType,
+
+    /// If true, finds all matching elements and returns an Array.
+    /// If false, finds the first match.
+    #[serde(default)]
+    pub multiple: bool,
+
+    /// Nested rules. Used when data_type is Object, or when multiple is true and we want an array of objects.
+    #[serde(default)]
+    pub children: Vec<ExtractionRule>,
+
+    /// Optional transformation steps (e.g. trim, regex).
+    #[serde(default)]
+    pub transform: Vec<TransformType>,
 }
 
 /// Selector type.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub enum SelectorType {
     /// CSS selector
+    #[default]
     Css,
     /// XPath selector
     XPath,
 }
 
 /// Data type for extracted values.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default, PartialEq)]
 pub enum DataType {
-    /// Text
+    /// Text (string)
+    #[default]
     Text,
     /// Number (integer or float)
     Number,
     /// Boolean
     Boolean,
-    /// Date/time
+    /// Date/time string
     DateTime,
-    /// URL
+    /// URL string
     Url,
-    /// Email
+    /// Email string
     Email,
+    /// Nested Object
+    Object,
+    /// Array of values (usually derived from `multiple`, but explicit type exists)
+    Array,
 }
 
-/// Validation rule.
+/// Transformation types.
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ValidationRule {
-    /// Validation type
-    pub validation_type: ValidationType,
-    /// Validation parameters
-    pub params: std::collections::HashMap<String, String>,
-}
-
-/// Validation type.
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum ValidationType {
-    /// Required field
-    Required,
-    /// Minimum length
-    MinLength,
-    /// Maximum length
-    MaxLength,
-    /// Pattern match (regex)
-    Pattern,
-    /// Minimum value
-    MinValue,
-    /// Maximum value
-    MaxValue,
-    /// Custom validation
-    Custom,
+pub enum TransformType {
+    /// Trim whitespace
+    Trim,
+    /// Convert to lowercase
+    Lowercase,
+    /// Convert to uppercase
+    Uppercase,
+    /// Regex replacement (pattern, replacement)
+    RegexReplace(String, String),
 }

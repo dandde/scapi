@@ -60,6 +60,9 @@ pub struct AppState {
     pub fetch_service: std::sync::Arc<domain::fetch::service::DefaultFetchService>,
     /// Parse service
     pub parse_service: std::sync::Arc<domain::parse::service::DefaultParseService>,
+
+    /// Extract service
+    pub extract_service: std::sync::Arc<domain::extract::service::DefaultExtractService>,
 }
 
 impl AppState {
@@ -73,9 +76,15 @@ impl AppState {
         ));
         let parse_service = std::sync::Arc::new(domain::parse::service::DefaultParseService::new());
 
+        let extract_service = std::sync::Arc::new(
+            domain::extract::service::DefaultExtractService::new(parse_service.clone()),
+        );
+
         Ok(Self {
             fetch_service,
             parse_service,
+
+            extract_service,
         })
     }
 }

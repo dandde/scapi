@@ -20,6 +20,10 @@ pub enum CommonError {
     /// Serialization/deserialization error
     #[error("Serialization error: {0}")]
     SerializationError(String),
+
+    /// Internal server error
+    #[error("Internal error: {0}")]
+    InternalError(String),
 }
 
 impl CommonError {
@@ -36,5 +40,31 @@ impl CommonError {
     /// Create a new serialization error
     pub fn serialization(msg: impl Into<String>) -> Self {
         Self::SerializationError(msg.into())
+    }
+
+    /// Create a new internal error
+    pub fn internal(msg: impl Into<String>) -> Self {
+        Self::InternalError(msg.into())
+    }
+}
+
+impl axum::response::IntoResponse for CommonError {
+    fn into_response(self) -> axum::response::Response {
+        let (status, message) = match self {
+            Self::ConfigError(msg) => (axum::http::StatusCode::INTERNAL_SERVER_ERROR, msg),
+            Self::InvalidInput(msg) => (axum::http::StatusCode::BAD_REQUEST, msg),
+            Self::IoError(err) => (
+                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                err.to_string(),
+            ),
+            Self::SerializationError(msg) => (axum::http::StatusCode::INTERNAL_SERVER_ERROR, msg),
+            Self::InternalError(msg) => (axum::http::StatusCode::INTERNAL_SERVER_ERROR, msg),
+        };
+
+        let body = axum::Json(serde_json::json!({
+            "error": message,
+        }));
+
+        (status, body).into_response()
     }
 }

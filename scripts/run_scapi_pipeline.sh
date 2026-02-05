@@ -57,4 +57,21 @@ else
     exit 1
 fi
 
+echo "Testing /api/v1/select..."
+RESPONSE_SELECT=$(curl -s -w "\n%{http_code}" -X POST http://127.0.0.1:3000/api/v1/select \
+     -H "Content-Type: application/json" \
+     -d '{"html": "<div class=\"foo\">Hello</div>", "selector": ".foo"}')
+
+HTTP_CODE_SELECT=$(echo "$RESPONSE_SELECT" | tail -n1)
+BODY_SELECT=$(echo "$RESPONSE_SELECT" | sed '$d')
+
+echo "Select Response Code: $HTTP_CODE_SELECT"
+if [[ "$HTTP_CODE_SELECT" == "200" ]]; then
+    echo -e "${GREEN}SUCCESS: Select endpoint working!${NC}"
+else
+    echo "FAILURE: Select endpoint failed with $HTTP_CODE_SELECT"
+    echo "Body: $BODY_SELECT"
+    exit 1
+fi
+
 wait $SERVER_PID

@@ -1,95 +1,52 @@
 //! Extract structured data handler.
 
-use axum::{
-    extract::State,
-    http::StatusCode,
-    response::{IntoResponse, Json},
-};
+use axum::{extract::State, response::Json};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
 use crate::AppState;
+use crate::common::error::CommonError;
+use crate::domain::extract::config::ExtractConfig;
+use crate::domain::extract::rules::ExtractionRule;
+use crate::domain::extract::service::{ExtractResult, ExtractService};
 
 /// Extract request payload.
 #[derive(Debug, Deserialize)]
 pub struct ExtractRequest {
-    /// HTML content or selected elements
-    pub content: String,
+    /// HTML content to extract from
+    pub html: String,
     /// Extraction rules
     pub rules: Vec<ExtractionRule>,
-    /// Trim whitespace
-    pub trim_whitespace: Option<bool>,
-    /// Decode HTML entities
-    pub decode_html_entities: Option<bool>,
-    /// Maximum number of fields
-    pub max_fields: Option<usize>,
-}
-
-/// Extraction rule.
-#[derive(Debug, Deserialize)]
-pub struct ExtractionRule {
-    /// Field name
-    pub field: String,
-    /// Selector for the field
-    pub selector: String,
-    /// Data type (text, number, boolean, etc.)
-    pub data_type: String,
-    /// Whether the field is required
-    pub required: bool,
+    /// Configuration options
+    #[serde(default)]
+    pub config: ExtractConfig,
 }
 
 /// Extract response payload.
 #[derive(Debug, Serialize)]
 pub struct ExtractResponse {
-    /// Extracted data
-    pub results: Vec<ExtractedData>,
-    /// Validation errors
-    pub validation_errors: Vec<String>,
-    /// Extraction statistics
-    pub stats: ExtractionStats,
-    /// Request metadata
-    pub metadata: ResponseMetadata,
-}
-
-/// Extracted data.
-#[derive(Debug, Serialize)]
-pub struct ExtractedData {
-    /// Field values
-    pub fields: std::collections::HashMap<String, serde_json::Value>,
-}
-
-/// Extraction statistics.
-#[derive(Debug, Serialize)]
-pub struct ExtractionStats {
-    /// Total fields processed
-    pub total_fields: usize,
-    /// Successful extractions
-    pub successful: usize,
-    /// Failed extractions
-    pub failed: usize,
-    /// Time taken in milliseconds
-    pub time_ms: u128,
-}
-
-/// Response metadata (common to all responses).
-#[derive(Debug, Serialize)]
-pub struct ResponseMetadata {
     /// Request ID
-    pub request_id: String,
+    pub id: String,
     /// Timestamp
     pub timestamp: String,
-    /// Duration in milliseconds
-    pub duration_ms: u128,
+    /// Extracted result
+    pub result: ExtractResult,
 }
 
 /// Extract structured data from HTML.
 pub async fn extract_handler(
-    State(_state): State<Arc<AppState>>,
-    Json(_request): Json<ExtractRequest>,
-) -> impl IntoResponse {
-    // TODO: Implement extract logic
-    (
-        StatusCode::NOT_IMPLEMENTED,
-        "Extract handler not yet implemented".to_string(),
-    )
+    State(state): State<Arc<AppState>>,
+    Json(request): Json<ExtractRequest>,
+) -> Result<Json<ExtractResponse>, CommonError> {
+    let result = state
+        .extract_service
+        .extract(&request.html, &request.rules, &request.config)
+        .await
+        .map_err(|e| CommonError::internal(e.to_string()))?;
+
+    Ok(Json(ExtractResponse {
+        id: uuid::Uuid::new_v4().to_string(),
+        timestamp: chrono::Utc::now().to_rfc3339(),
+        result,
+    }))
 }
