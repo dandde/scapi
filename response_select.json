@@ -1,0 +1,28 @@
+Note: Unnecessary use of -X or --request, POST is already inferred.
+* Host localhost:3000 was resolved.
+* IPv6: ::1
+* IPv4: 127.0.0.1
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0*   Trying [::1]:3000...
+* connect to ::1 port 3000 from ::1 port 52792 failed: Connection refused
+*   Trying 127.0.0.1:3000...
+* Connected to localhost (127.0.0.1) port 3000
+> POST /api/v1/select HTTP/1.1
+> Host: localhost:3000
+> User-Agent: curl/8.7.1
+> Accept: */*
+> Content-Type: application/json
+> Content-Length: 117
+> 
+} [117 bytes data]
+* upload completely sent off: 117 bytes
+< HTTP/1.1 200 OK
+< content-type: application/json
+< content-length: 132
+< date: Fri, 06 Feb 2026 02:33:43 GMT
+< 
+{ [132 bytes data]
+100   249  100   132  100   117  26693  23660 --:--:-- --:--:-- --:--:-- 62250
+* Connection #0 to host localhost left intact
+{"count":1,"matches":[{"element_id":0,"tag":"unknown","text":"","attributes":{},"html":"<div class=\"content\">Hello World</div>"}]}

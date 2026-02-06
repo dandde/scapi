@@ -1,11 +1,13 @@
 //! HTML parser infrastructure.
 
-pub mod vdom;
 pub mod html;
+pub mod htmler_adapter;
+pub mod streaming_adapter;
+pub mod vdom;
 
 // Re-exports
-pub use vdom::VDom;
 pub use html::HtmlParser;
+pub use vdom::VDom;
 
 /// Trait for parser backends.
 pub trait ParserBackend: Send + Sync {

@@ -63,6 +63,9 @@ pub struct AppState {
 
     /// Extract service
     pub extract_service: std::sync::Arc<domain::extract::service::DefaultExtractService>,
+
+    /// Select service
+    pub select_service: std::sync::Arc<domain::select::service::DefaultSelectService>,
 }
 
 impl AppState {
@@ -80,11 +83,14 @@ impl AppState {
             domain::extract::service::DefaultExtractService::new(parse_service.clone()),
         );
 
+        let select_service =
+            std::sync::Arc::new(domain::select::service::DefaultSelectService::default());
+
         Ok(Self {
             fetch_service,
             parse_service,
-
             extract_service,
+            select_service,
         })
     }
 }
